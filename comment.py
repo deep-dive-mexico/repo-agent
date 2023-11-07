@@ -18,7 +18,7 @@ class GithubHandler:
         # get repo
         self.repo = self.g.get_repo(self.repo_name)
         # get prs
-        self.prs = self.repo.get_pulls(state = "open", sort = "created", base = "master")
+        self.prs = self.repo.get_pulls(state = "open", sort = "created", base = "main")
         # get prs numbers
         self.prs_nums = [pr.number for pr in self.prs]
         # create dict of prs
@@ -59,7 +59,7 @@ class GithubHandler:
 
 if __name__ == "__main__":
     print(os.environ["GH_ACCESSTOKEN"])
-    print(os.environ["pull_request_number"])
+    print(os.environ["PR_NUMBER"])
     GH = GithubHandler()
     
         
