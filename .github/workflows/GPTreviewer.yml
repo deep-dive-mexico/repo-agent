@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR
-        run: make run_comment
+        run: |
+            python3 comment.py
         env:
           GH_ACCESSTOKEN: ${{ secrets.GITHUB_TOKEN }}
           pull_request_number: ${{ github.event.number }}

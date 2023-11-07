@@ -17,9 +17,10 @@ class GithubHandler:
         self.prs = self.repo.get_pulls(state = "open", sort = "created", base = "master")
         # get prs numbers
         self.prs_nums = [pr.number for pr in self.prs]
-        
+        # create dict of prs
+        self.prs_dict = {k: v for k,v}
     def modify_pr(self, pr_num):
-        
+
 
 if __name__ == "__main__":
     print(os.environ["GH_ACCESSTOKEN"])
