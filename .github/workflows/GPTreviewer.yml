@@ -1,0 +1,15 @@
+name: My Workflow
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  my-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on PR
+        run: make run-comment
+        env:
+          GH_ACCESSTOKEN: ${{ secrets.GITHUB_TOKEN }}
+          pull_request_number: ${{ github.event.number }}
