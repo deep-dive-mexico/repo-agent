@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Comment on PR
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACCESSTOKEN: ${{ secrets.GH_TOKEN }}
           pull_request_number: ${{ github.event.number }}
         run: |
           make install
