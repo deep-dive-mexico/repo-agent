@@ -4,6 +4,7 @@ from openai import OpenAI
 import openai
 import os
 import json
+import re
 
 ACCESS_TOKEN = os.environ["GH_ACCESSTOKEN"]
 branch_or_prnum = os.environ["PR_NUMBER"] # On pull request open (number), on push (branch name)
@@ -74,6 +75,10 @@ class GithubHandler:
                     return pr
         return prs[0]
     
+    def get_pr_from_id(self, pr_id: int):
+        pr = self.repo.get_pull(pr_id)
+        return pr
+    
     def get_all_files(self):
         contents = self.repo.get_contents("")
 
@@ -121,6 +126,30 @@ class GithubHandler:
                 files_and_deltas += '-'*30 + '\n'
 
             return files_and_deltas
+        
+    def get_pr_deltas_new_2(self, pr):
+        files_and_deltas = ""
+        file_changes = pr.get_files()
+        for f in file_changes:
+            lines = f.patch.split('\n') 
+            current_line = 0  
+            deltas = ""
+            current_line = 0
+            for line in lines:
+                # Check for chunk header and calculate line changes
+                if line.startswith('@@'):
+                    deltas += f'{f.filename}\n'
+                    deltas += '-'*30 + '\n'
+                    deltas += line 
+                else:
+                    deltas += f"{line[:1]} Line {current_line}: {line[1:]}\n"
+                current_line += 1
+
+            files_and_deltas += f'{deltas}\n'
+            files_and_deltas += '-'*30 + '\n'
+
+        return files_and_deltas
+
 
     def get_pr_comments(self, pr):
         comments = ""
@@ -184,7 +213,7 @@ class GPTWrapper:
         # Return a readable string representation of the conversation
         return "\n".join(f"{msg['role']}: {msg['content']}" for msg in self.conversation)
 
-import re
+
 class ResponseParser():
     def __init__(self, response):
         self.python_code = self.parse_python_code(response)
@@ -202,7 +231,7 @@ class ResponseParser():
 
 def is_branch(candidate):
     try:
-        a = int(candidate)
+        _ = int(candidate)
         return False
     except:
         return True
@@ -213,20 +242,19 @@ if __name__ == "__main__":
     
     GH = GithubHandler(repo_name=os.environ['REPO_NAME'])
     GPT = GPTWrapper()
-    GPT.add_message("system", "You are a sassy Senior developer, who hates the fact that his job is only reviewing PRs, but just so happens, that he makes the best reviews, and always provides good advice, best practices and laughs at coe that is inneficient, but still provides a way to optimize it. You are a Senior Developer, and you are the best at what you do. Remember to keep your responses somewhat short in your messages")
+    GPT.add_message("system", "You are a sassy Senior developer, who hates the fact that his job is only reviewing PRs, but just so happens, that he makes the best reviews, and always provides good advice, best practices and laughs at coe that is inneficient, but still provides a way to optimize it. You are a Senior Developer, and you are the best at what you do. Remember to keep your responses somewhat short in your messages, every word you write is another precious moment at this job, so keep it short.")
     
     if is_branch(branch_or_prnum):
         pr = GH.get_latest_pr_from_branch(MAIN_BRANCH, branch_or_prnum)
     else:
-        pr = branch_or_prnum
-    pr_deltas = GH.get_pr_deltas_new(pr)
+        pr = GH.get_pr_from_id(int(branch_or_prnum))
+    pr_deltas = GH.get_pr_deltas_new_2(pr)
     
     GPT.add_message("user", "Provide a code review for this Pull Request:\n```python\n" + pr_deltas + "\n```\n")
 
     comments = GH.get_pr_comments(pr)
     GPT.add_message("user", f"Here are comments from the PR:\n{comments}")
     
-
     if comment_only:
         message_response = GPT.get_response(max_tokens=1000)
         print('Commenting on PR with response...')
@@ -234,32 +262,39 @@ if __name__ == "__main__":
 
     # Do a code review -- Experimental
     else:
+        for _ in range(3):
+            message_format = '''Return your comments in the following format, it needs to be python code!
+            body = # Your main comment here
+            event = # One of the following: "COMMENT", "REQUEST_CHANGES", "PENDING", "APPROVE"
+            comments = [
+            {
+                'path': 'my_file.py',    # adjust according to your files. USE THE FULL PATH
+                'position': position,           # adjust according to your diff, 
+                'body': 'You should consider refactoring this piece of code.'
+            },
+            {
+                'path': 'another_file.py',    # adjust according to your files. USE THE FULL PATH
+                'position': position,                # adjust according to your diff
+                'body': 'This part could be optimized.'
+            },
+            ]
+            when specifying the positions, ONLY USE THE LINES THAT HAVE CHANGED, the appear like + LINE or - LINE, be really careful with this! Don't use the ' token in your comments (only when needed for the code) or it will break the python code.
 
-        message_format = '''Return your comments in the following format, it needs to be python code!
-        body = # Your main comment here
-        event = # One of the following: "COMMENT", "REQUEST_CHANGES", "PENDING", "APPROVE"
-        comments = [
-        {
-            'path': 'my_file.py',    # adjust according to your files
-            'position': position,           # adjust according to your diff, 
-            'body': 'You should consider refactoring this piece of code.'
-        },
-        {
-            'path': 'another_file.py',    # adjust according to your files
-            'position': position,                # adjust according to your diff
-            'body': 'This part could be optimized.'
-        },
-        ]
-        when specifying the positions, ONLY USE THE LINES THAT HAVE CHANGED, the appear like + LINE or - LINE, be really careful with this! Don't use the ' token in your comments (only when needed for the code) or it will break the python code.
+            ONLY return the code
+            '''
+            GPT.add_message("user", message_format)
+            message_response = GPT.get_response(max_tokens=2500)
+            # Parse the response
+            try:
+                response_parser = ResponseParser(message_response)
+                body, event, comments = response_parser.get_body_event_and_comments()
+                breakpoint()
 
-        ONLY return the code
-        '''
-        GPT.add_message("user", message_format)
-        message_response = GPT.get_response(max_tokens=2500)
-        # Parse the response
-        response_parser = ResponseParser(message_response)
-        body, event, comments = response_parser.get_body_event_and_comments()
-
-        # Create a review
-        print('Creating review...')
-        pr.create_review(body=body, event=event, comments=comments)
+                # Create a review
+                print('Creating review...')
+                pr.create_review(body=body, event=event, comments=comments)
+                break
+            except Exception as e:
+                print(e)
+                print('Error parsing response, try again')
+                continue
