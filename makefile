@@ -1,4 +1,5 @@
 install:
-    pip3 install -r requirements.txt
+	pip3 install -r requirements.txt
+
 run:
-	python3 comment.py 
+	python3 comment.py
