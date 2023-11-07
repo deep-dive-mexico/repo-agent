@@ -51,7 +51,7 @@ class GithubHandler:
 
 if __name__ == "__main__":
     print(os.environ["GH_ACCESSTOKEN"])
-    #print(os.environ["pull_request_number"])
+    print(os.environ["pull_request_number"])
     GH = GithubHandler()
     
         
