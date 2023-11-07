@@ -1,16 +1,22 @@
-name: My Workflow
+name: Comment on Pull Request
 
 on:
   push:
   pull_request:
+    types: [opened]
 
 jobs:
-  my-job:
+  comment:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Comment on PR
+        uses: unsplash/comment-on-pr@v1
+        with:
+          message: "Thanks for opening this pull request!"
         env:
-          GH_ACCESSTOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           pull_request_number: ${{ github.event.number }}
         run: |
             ls

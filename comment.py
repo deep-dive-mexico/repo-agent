@@ -12,7 +12,7 @@ class GithubHandler:
 
         self.repo_name = repo_name
         # get repo
-        self.repo = g.get_repo(self.repo_name)
+        self.repo = self.g.get_repo(self.repo_name)
         # get prs
         self.prs = self.repo.get_pulls(state = "open", sort = "created", base = "master")
         # get prs numbers
@@ -29,7 +29,7 @@ class GithubHandler:
 
 if __name__ == "__main__":
     print(os.environ["GH_ACCESSTOKEN"])
-    print(os.environ["pull_request_number"])
+    #print(os.environ["pull_request_number"])
     GH = GithubHandler()
     
         
