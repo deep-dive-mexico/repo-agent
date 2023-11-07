@@ -17,7 +17,8 @@ class GithubHandler:
         self.prs = self.repo.get_pulls(state = "open", sort = "created", base = "master")
         # get prs numbers
         self.prs_nums = [pr.number for pr in self.prs]
-        # get prs by numbers
+        
+    def modify_pr(self, pr_num):
         
 
 if __name__ == "__main__":
