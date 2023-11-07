@@ -24,7 +24,7 @@ class GithubHandler:
         # create dict of prs
         self.prs_dict = {k: v for k, v in zip(self.prs_nums, self.prs)}
         # get all files
-        self.get_all_files()
+        # self.get_all_files()
 
 
     def authenticate(self):
@@ -41,6 +41,14 @@ class GithubHandler:
                 contents.extend(self.repo.get_contents(file_content.path))
             
         self.all_files = contents
+    
+    def get_pr_changes(self, pr_num: int):
+        pr = self.prs_dict[pr_num]
+        files_and_deltas = ""
+        file_changes = pr.get_files()
+        for f in file_changes:
+            files_and_deltas += f.filename + "\n" + f.patch + "\n"
+        return files_and_deltas
 
     def modify_pr(self, pr_num: int):
         pass
