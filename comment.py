@@ -3,6 +3,11 @@ import os
 
 ACCESS_TOKEN =  os.environ["GH_ACCESSTOKEN"]
 
+# github authentication
+auth = Auth.Token(ACCESS_TOKEN)
+g = Github(auth=auth)
+
+
 class GithubHandler:
 
     def __init__(self, repo_name: str = "deep-dive-mexico/aladdin-repo"):
@@ -18,6 +23,9 @@ class GithubHandler:
         self.prs_nums = [pr.number for pr in self.prs]
         # create dict of prs
         self.prs_dict = {k: v for k, v in zip(self.prs_nums, self.prs)}
+        # get all files
+        self.get_all_files()
+
 
     def authenticate(self):
         # github authentication
