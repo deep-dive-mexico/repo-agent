@@ -2,6 +2,7 @@ from github import Auth, Github
 import os
 
 ACCESS_TOKEN =  os.environ["GH_ACCESSTOKEN"]
+
 # github authentication
 auth = Auth.Token(ACCESS_TOKEN)
 g = Github(auth=auth)
@@ -17,14 +18,14 @@ class GithubHandler:
         # get repo
         self.repo = self.g.get_repo(self.repo_name)
         # get prs
-        self.prs = self.repo.get_pulls(state = "open", sort = "created", base = "master")
+        self.prs = self.repo.get_pulls(state = "open", sort = "created", base = "main")
         # get prs numbers
         self.prs_nums = [pr.number for pr in self.prs]
         # create dict of prs
         self.prs_dict = {k: v for k, v in zip(self.prs_nums, self.prs)}
-
         # get all files
-        self.get_all_files()
+        # self.get_all_files()
+
 
     def authenticate(self):
         # github authentication
@@ -40,6 +41,14 @@ class GithubHandler:
                 contents.extend(self.repo.get_contents(file_content.path))
             
         self.all_files = contents
+    
+    def get_pr_changes(self, pr_num: int):
+        pr = self.prs_dict[pr_num]
+        files_and_deltas = ""
+        file_changes = pr.get_files()
+        for f in file_changes:
+            files_and_deltas += f.filename + "\n" + f.patch + "\n"
+        return files_and_deltas
 
     def modify_pr(self, pr_num: int):
         pass
@@ -54,11 +63,11 @@ class GithubHandler:
     
     def update_file_contents(self, filepath: str):
         contents = self.repo.get_contents(filepath, ref)
-        
+
 
 if __name__ == "__main__":
     print(os.environ["GH_ACCESSTOKEN"])
-    print(os.environ["pull_request_number"])
+    print(os.environ["PR_NUMBER"])
     GH = GithubHandler()
     
         
