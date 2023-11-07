@@ -14,6 +14,7 @@ jobs:
       - name: Comment on PR
         env:
           GH_ACCESSTOKEN: ${{ secrets.GH_TOKEN }}
+          REPO_NAME: ${{ github.repository }}
         run: |
           export PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
           make install
