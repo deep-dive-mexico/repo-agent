@@ -13,5 +13,6 @@ jobs:
           GH_ACCESSTOKEN: ${{ secrets.GH_TOKEN }}
           pull_request_number: ${{ github.event.number }}
         run: |
+            ls
             python3 comment.py
         
