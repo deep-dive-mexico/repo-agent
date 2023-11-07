@@ -12,13 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Comment on PR
-        uses: unsplash/comment-on-pr@v1
         with:
           message: "Thanks for opening this pull request!"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           pull_request_number: ${{ github.event.number }}
         run: |
-            ls
-            python3 comment.py
-        
+          ls
+          python3 comment.py
