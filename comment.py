@@ -190,6 +190,7 @@ class GithubHandler:
                 
                 add_start_add_len = list(map(int, re.findall("\+(.+?) ", line)[0].split(',')))
                 rem_start_rem_len = list(map(int, re.findall("\-(.+?) ", line)[0].split(',')))
+                
                 if len(add_start_add_len) == 1:
                     return f'{filename}\n' + '-'*30 + '\n'
                 
