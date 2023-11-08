@@ -16,7 +16,7 @@ jobs:
           GH_ACCESSTOKEN: ${{ secrets.GH_TOKEN}}
           REPO_NAME: ${{ github.repository }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY}}
-          MAIN_BRANCH: ${{ github.base_ref }}
+          MAIN_BRANCH: main
 
         run: |
           export PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
