@@ -13,7 +13,7 @@ import logging
 from typing import List
 
 ACCESS_TOKEN = os.environ["GH_ACCESSTOKEN"]
-branch_or_prnum = os.environ["PR_NUMBER"] # On pull request open (number), on push (branch name)
+BRANCH_OR_PR_NUMBER = os.environ["PR_NUMBER"] # On pull request open (number), on push (branch name)
 repo_name = os.environ["REPO_NAME"]
 openai.api_key = os.environ["OPENAI_API_KEY"]
 MAIN_BRANCH = os.environ["MAIN_BRANCH"].split('/')[-1]
@@ -592,5 +592,5 @@ class CommentAgent:
                 self.comment_on_pr()
 
 if __name__ == "__main__":
-    agent = CommentAgent(repo_name=os.environ['REPO_NAME'], branch_or_prnum='branch_or_prnum')
+    agent = CommentAgent(repo_name=os.environ['REPO_NAME'], branch_or_prnum=BRANCH_OR_PR_NUMBER)
     agent.run()
