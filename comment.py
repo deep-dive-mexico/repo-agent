@@ -609,6 +609,8 @@ class CommentAgent:
                 self.GPT.add_message("user", f'Your code failed with exception {error} try again')
                 logging.error('Error parsing response, try again')
                 continue
+            except github.GithubException.GithubException:
+                return False
         return False
 
     def run(self) -> None:
