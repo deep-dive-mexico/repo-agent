@@ -434,7 +434,7 @@ class ResponseParser:
         match = re.search(pattern, llm_answer)
         if match:
             python_code_block = match.group(1)
-            print("Found Valid Python: ", python_code_block)
+            print("Found Python Block: ", python_code_block)
             return python_code_block
         else:
             raise ParsingError('No python snippet provided')
@@ -450,7 +450,29 @@ class ResponseParser:
         """
         locals_dict = {}
         exec(self.python_code, locals_dict)
-        return locals_dict['body'], locals_dict['event'], locals_dict['comments']
+        
+        return locals_dict['body'], locals_dict['event'], self.verify_comments_comply(locals_dict['comments'])
+    
+    def verify_comments_comply(self, comments: List[dict]):
+        """Verifies comment dicts comply with the expected format
+
+        Args:
+            comments (List[dict]): A list of comment dicts
+        """
+        new_comments = []
+        for comment in comments:
+            new_comment = comment.copy()
+            if new_comment['side'] not in ['LEFT', 'RIGHT']:
+                new_comment.pop(new_comment['side'])
+            if "start_line" in new_comment:
+                if new_comment["start_line"] is None:
+                    new_comment.pop("start_line")
+            if "start_side" in new_comment:
+                if new_comment["start_side"] is None:
+                    new_comment.pop("start_side")
+            new_comments.append(new_comment)
+        return new_comments
+            
 
     
 
