@@ -187,8 +187,15 @@ class GithubHandler:
         for line in lines:
             if line.startswith('@@'):
                 deltas += self.get_chunk_header(line)
-                add_start, add_len = list(map(int, re.findall("\+(.+?) ", line)[0].split(',')))
-                rem_start, rem_len = list(map(int, re.findall("\-(.+?) ", line)[0].split(',')))
+                
+                add_start_add_len = list(map(int, re.findall("\+(.+?) ", line)[0].split(',')))
+                rem_start_rem_len = list(map(int, re.findall("\-(.+?) ", line)[0].split(',')))
+                if len(add_start_add_len) == 1:
+                    return f'{filename}\n' + '-'*30 + '\n'
+                
+                add_start, add_len = add_start_add_len
+                rem_start, rem_len = rem_start_rem_len
+                
                 chunk_len = max(add_len, rem_len)
                 current_add_line = add_start
                 current_rem_line = rem_start
