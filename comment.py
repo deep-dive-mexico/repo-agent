@@ -12,6 +12,7 @@ from GPTsettings import (MESSAGE_FORMAT,
                          SYSTEM_PROMPT, 
                          USER_INSTRUCTIONS,
                          COMMENTS_PROMPT)
+
 ACCESS_TOKEN = os.environ["GH_ACCESSTOKEN"]
 branch_or_prnum = os.environ["PR_NUMBER"] # On pull request open (number), on push (branch name)
 repo_name = os.environ["REPO_NAME"]
