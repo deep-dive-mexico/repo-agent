@@ -1,4 +1,5 @@
 from github import Auth, Github
+import github
 import os
 from openai import OpenAI
 import openai
@@ -7,11 +8,9 @@ import json
 import re
 import traceback
 # Local Imports
-from GPTsettings import (MESSAGE_FORMAT, 
-                         MODEL, 
-                         SYSTEM_PROMPT, 
-                         USER_INSTRUCTIONS,
-                         COMMENTS_PROMPT)
+from GPTsettings import GPTsettings
+import logging
+from typing import List
 
 ACCESS_TOKEN = os.environ["GH_ACCESSTOKEN"]
 branch_or_prnum = os.environ["PR_NUMBER"] # On pull request open (number), on push (branch name)
@@ -299,7 +298,7 @@ class GithubHandler:
         self.repo.update_file(file.path, commit_message, new_contents, file.sha)
 
 class GPTWrapper:
-    def __init__(self, model: str = MODEL) -> None:
+    def __init__(self, model: str = GPTsettings.MODEL) -> None:
         """
         Initializes a new instance of the GPTWrapper class.
 
@@ -387,6 +386,11 @@ class GPTWrapper:
         """
         return "\n".join(f"{msg['role']}: {msg['content']}" for msg in self.conversation)
 
+class ParsingError(Exception):
+    """
+    An exception raised when an error occurs while parsing a response.
+    """
+    pass
 
 class ResponseParser:
     """
@@ -433,7 +437,7 @@ class ResponseParser:
             print("Found Valid Python: ", python_code_block)
             return python_code_block
         else:
-            raise Exception('No python snippet provided')
+            raise ParsingError('No python snippet provided')
 
     def get_body_event_and_comments(self):
         """
@@ -448,53 +452,145 @@ class ResponseParser:
         exec(self.python_code, locals_dict)
         return locals_dict['body'], locals_dict['event'], locals_dict['comments']
 
-def is_branch(candidate):
-    try:
-        _ = int(candidate)
-        return False
-    except:
-        return True
     
 
-if __name__ == "__main__":
+class CommentAgent:
+    """
+    A class that represents an agent that can comment on or review a pull request.
 
-    comment_only = False
-    
-    GH = GithubHandler(repo_name=os.environ['REPO_NAME'])
-    GPT = GPTWrapper()
-    GPT.add_message("system", SYSTEM_PROMPT)
-    
-    if is_branch(branch_or_prnum):
-        pr = GH.get_latest_pr_from_branch(MAIN_BRANCH, branch_or_prnum)
-    else:
-        pr = GH.get_pr_from_id(int(branch_or_prnum))
+    Attributes:
+    -----------
+    comment_only : bool
+        A boolean indicating whether the agent should only comment on the pull request.
+    GH : GithubHandler
+        An instance of the GithubHandler class.
+    pr : github.PullRequest.PullRequest
+        An instance of the PullRequest class representing the pull request.
+    GPT : GPTWrapper
+        An instance of the GPTWrapper class.
+    """
+    def __init__(self, repo_name: str, branch_or_prnum: str, comment_only: bool = False) -> None:
+        """
+        Initializes a CommentAgent instance.
+
+        Parameters:
+        -----------
+        repo_name : str
+            The name of the repository.
+        branch_or_prnum : str
+            The branch name or pull request number.
+        comment_only : bool, optional
+            A boolean indicating whether the agent should only comment on the pull request.
+        """
+        self.comment_only = comment_only
+        self.GH = GithubHandler(repo_name=repo_name)
+        self.pr = self.get_pr(branch_or_prnum)
+        self.init_GPT()
+
+    @staticmethod
+    def is_branch(branch_or_prnum: str) -> bool:
+        """
+        Determines whether the given string is a branch name or a pull request number.
+
+        Parameters:
+        -----------
+        branch_or_prnum : str
+            The branch name or pull request number.
+
+        Returns:
+        --------
+        bool
+            True if the string is a branch name, False if it is a pull request number.
+        """
+        try:
+            _ = int(branch_or_prnum)
+            return False
+        except ValueError:
+            return True
         
-    pr_deltas = GH.get_pr_deltas(pr)
-    GPT.add_message("user", USER_INSTRUCTIONS.format(pr_title=pr.title, pr_user=pr.user, pr_deltas=pr_deltas))
-    comments = GH.get_pr_comments(pr)
-    GPT.add_message("user", COMMENTS_PROMPT.format(comments=comments))
-    
-    if comment_only:
-        message_response = GPT.get_response(max_tokens=1000)
-        print('Commenting on PR with response...')
-        pr.create_issue_comment(message_response)
+    def init_GPT(self) -> None:
+        """
+        Initializes the GPTWrapper instance.
+        """
+        self.GPT = GPTWrapper()
+        self.GPT.add_message("system", GPTsettings.SYSTEM_PROMPT)
+        self.add_pr_messages()
 
-    # Do a code review -- Experimental
-    else:
+    def get_pr(self, branch_or_prnum: str) -> github.PullRequest.PullRequest:
+        """
+        Gets the pull request instance from the given branch name or pull request number.
+
+        Parameters:
+        -----------
+        branch_or_prnum : str
+            The branch name or pull request number.
+
+        Returns:
+        --------
+        github.PullRequest.PullRequest
+            An instance of the PullRequest class representing the pull request.
+        """
+        if self.is_branch(branch_or_prnum):
+            return self.GH.get_latest_pr_from_branch(MAIN_BRANCH, branch_or_prnum)
+        else:
+            return self.GH.get_pr_from_id(int(branch_or_prnum))
+
+    def add_pr_messages(self) -> None:
+        """
+        Adds messages to the GPTWrapper instance related to the pull request.
+        """
+        pr_deltas = self.GH.get_pr_deltas(self.pr)
+        self.GPT.add_message("user", GPTsettings.USER_INSTRUCTIONS.format(pr_title=self.pr.title, pr_user=self.pr.user, pr_deltas=pr_deltas))
+        comments = self.GH.get_pr_comments(self.pr)
+        self.GPT.add_message("user", GPTsettings.COMMENTS_PROMPT.format(comments=comments))
+
+    def comment_on_pr(self) -> None:
+        """
+        Comments on the pull request with the response from the GPTWrapper instance.
+        """
+        message_response = self.GPT.get_response(max_tokens=1000)
+        logging.info('Commenting on PR with response...')
+        self.pr.create_issue_comment(message_response)
+
+    def review_pr(self) -> bool:
+        """
+        Reviews the pull request with the response from the GPTWrapper instance.
+
+        Returns:
+        --------
+        bool
+            True if the review was successful, False otherwise.
+        """
         for _ in range(3):
-            message_format = MESSAGE_FORMAT
-            GPT.add_message("user", message_format)
-            message_response = GPT.get_response(max_tokens=2500)
+            message_format = GPTsettings.MESSAGE_FORMAT
+            self.GPT.add_message("user", message_format)
+            message_response = self.GPT.get_response(max_tokens=2500)
             try:
-                print(message_response) # Print the response message (Can be helpful for debugging)
+                logging.info(message_response)
                 response_parser = ResponseParser(message_response)
                 body, event, comments = response_parser.get_body_event_and_comments()
-                pr.create_review(body=body, event=event, comments=comments)
-                break
-            except Exception as e:
+                self.pr.create_review(body=body, event=event, comments=comments)
+                return True
+            except ParsingError as e:
                 error = traceback.format_exc()
-                print(error)
-                GPT.add_message("user", f'Your code failed with exception {error} try again')
-                print('Error parsing response, try again')
+                logging.error(error)
+                self.GPT.add_message("user", f'Your code failed with exception {error} try again')
+                logging.error('Error parsing response, try again')
                 continue
-        
+        return False
+
+    def run(self) -> None:
+        """
+        Runs the CommentAgent instance.
+        """
+        if self.comment_only:
+            self.comment_on_pr()
+        else:
+            success = self.review_pr()
+            if not success:
+                self.init_GPT()
+                self.comment_on_pr()
+
+if __name__ == "__main__":
+    agent = CommentAgent(repo_name=os.environ['REPO_NAME'], branch_or_prnum='branch_or_prnum')
+    agent.run()
