@@ -353,7 +353,7 @@ class GPTWrapper:
             max_tokens=max_tokens
         )
         
-        return response.choices[0].text
+        return response.choices[0].message.content
     
     def __getitem__(self, index: int) -> dict[str, str]:
         """
