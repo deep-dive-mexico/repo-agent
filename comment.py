@@ -449,7 +449,10 @@ class ResponseParser:
             A tuple containing the values of 'body', 'event', and 'comments'.
         """
         locals_dict = {}
-        exec(self.python_code, locals_dict)
+        try:
+            exec(self.python_code, locals_dict)
+        except Exception as e:
+            raise ParsingError('Error executing python code')
         
         return locals_dict['body'], locals_dict['event'], self.verify_comments_comply(locals_dict['comments'])
     
