@@ -197,7 +197,6 @@ class GithubHandler:
                 add_start, add_len = add_start_add_len
                 rem_start, rem_len = rem_start_rem_len
                 
-                chunk_len = max(add_len, rem_len)
                 current_add_line = add_start
                 current_rem_line = rem_start
             else:
