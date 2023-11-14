@@ -170,7 +170,9 @@ class ResponseParser:
             print("Found Python Block: ", python_code_block)
             return python_code_block
         else:
-            raise ParsingError("No python snippet provided")
+            raise ParsingError(
+                "No python snippet provided, remember to use ```python\n<valid_python_code>\n```"
+            )
 
     def get_body_event_and_comments(self):
         """
