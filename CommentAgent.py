@@ -255,11 +255,11 @@ class CommentAgent:
             The GitHub authentication token.
         """
         self.comment_only = comment_only
+        self.main_branch = main_branch
         self.GH = GithubHandler(
             repo_name=repo_name, main_branch=main_branch, auth_token=github_auth_token
         )
         self.pr = self.get_pr(branch_or_prnum)
-        self.main_branch = main_branch
         self.init_GPT()
 
     @staticmethod
