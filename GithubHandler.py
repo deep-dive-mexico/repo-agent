@@ -145,7 +145,7 @@ class GithubHandler:
             traceback.print_exc()
             return "Could not retrieve file contents."
 
-    def get_pr_deltas(self, pr, valid_extensions=None):
+    def get_pr_deltas(self, pr):
         """
         Gets the deltas for a pull request.
 
@@ -155,8 +155,8 @@ class GithubHandler:
         Returns:
             str: The deltas for the pull request.
         """
-        if valid_extensions is None:
-            valid_extensions = self.FILE_EXTENSIONS
+
+        valid_extensions = self.FILE_EXTENSIONS
         files_and_deltas = ""
         file_changes = pr.get_files()
         for f in file_changes:
