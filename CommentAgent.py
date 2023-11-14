@@ -380,3 +380,11 @@ class CommentAgent:
             if not success:
                 self.init_GPT()
                 self.comment_on_pr()
+
+
+def get_unique_list_items(list_: list):
+    unique_list = []
+    for item in list_:
+        if item not in unique_list:
+            unique_list.append(item)
+    return unique_list
