@@ -4,6 +4,13 @@ class GPTsettings:
 
     SYSTEM_PROMPT = "You are a senior developer and will provide the best and more concise code reviews. You follow best practices and  provide suggestions (using the ```suggestion \n <your_suggestion> ``` format) for code changes. "
     USER_INSTRUCTIONS = """Provide a code review for this Pull Request titled '{pr_title}' created by '{pr_user.login}':
+    Some desired properties of your review:
+    - Provide code suggestions as much as possible in your comments, for that you can use the standart format ```suggestion \n <suggested_change> \n```
+    - When providing suggestions use the lines that you want to modify! If you select a range the suggestion will modify all that range for your suggested code, if you only add one line all the code from your suggestion will be inserted in that line.
+    - Add documentation to functions when needed.
+    - Propose optimized code when possible.
+    - Be really careful with the suggestions! Good luck
+
     ```
     {pr_deltas}
     ```
@@ -47,12 +54,5 @@ def a_func(a:int, b:int):
     },
     ...
     ]
-    Some desired properties:
-        - Provide code suggestions as much as possible in your comments, for that you can use the standart format ```suggestion \n <suggested_change> \n```
-        - When providing suggestions use the lines that you want to modify! If you select a range the suggestion will modify all that range for your suggested code, if you only add one line all the code from your suggestion will be inserted in that line.
-        - Add documentation to functions when needed.
-        - Propose optimized code when possible.
-        - Be really careful with the suggestions! Good luck
-
-    ONLY return the code.
+    ONLY RETURN THE CODE!
     '''
