@@ -8,6 +8,22 @@ class GithubHandler:
     Handles interactions with the GitHub API.
     """
 
+    FILE_EXTENSIONS = [
+        ".py",
+        ".java",
+        ".js",
+        ".ts",
+        ".html",
+        ".css",
+        ".scss",
+        ".sass",
+        ".gql",
+        ".graphql",
+        ".sql",
+        ".md",
+        ".jsx",
+    ]
+
     def __init__(
         self, repo_name: str, main_branch: str = "main", auth_token: str = None
     ):
@@ -25,21 +41,6 @@ class GithubHandler:
         self.prs = self.repo.get_pulls(state="open", sort="created", base=main_branch)
         self.prs_nums = [pr.number for pr in self.prs]
         self.prs_dict = {k: v for k, v in zip(self.prs_nums, self.prs)}
-        self.accepted_file_extensions = [
-            ".py",
-            ".java",
-            ".js",
-            ".ts",
-            ".html",
-            ".css",
-            ".scss",
-            ".sass",
-            ".gql",
-            ".graphql",
-            ".sql",
-            ".md",
-            ".jsx",
-        ]
 
     def get_commits(self):
         """
@@ -144,7 +145,7 @@ class GithubHandler:
             traceback.print_exc()
             return "Could not retrieve file contents."
 
-    def get_pr_deltas(self, pr):
+    def get_pr_deltas(self, pr, valid_extensions=None):
         """
         Gets the deltas for a pull request.
 
@@ -154,9 +155,13 @@ class GithubHandler:
         Returns:
             str: The deltas for the pull request.
         """
+        if valid_extensions is None:
+            valid_extensions = self.FILE_EXTENSIONS
         files_and_deltas = ""
         file_changes = pr.get_files()
         for f in file_changes:
+            if not any([f.filename.endswith(ext) for ext in valid_extensions]):
+                continue
             file_full_content = self.get_file_contents(f.filename, ref=pr.head.sha)
             full_file_delta = self.get_full_file_delta(f.filename, file_full_content)
             file_delta_str = self.get_file_delta(f.patch, f.filename)

@@ -59,3 +59,18 @@ comments = [
 
 ONLY RETURN THE CODE and use ```python\n<valid_python_code>\n```"
 '''
+    FILE_EXTENSIONS = [
+        ".py",
+        ".java",
+        ".js",
+        ".ts",
+        ".html",
+        ".css",
+        ".scss",
+        ".sass",
+        ".gql",
+        ".graphql",
+        ".sql",
+        ".md",
+        ".jsx",
+    ]

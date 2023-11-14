@@ -316,7 +316,9 @@ class CommentAgent:
         """
         Adds messages to the GPTWrapper instance related to the pull request.
         """
-        pr_deltas = self.GH.get_pr_deltas(self.pr)
+        pr_deltas = self.GH.get_pr_deltas(
+            self.pr, valid_extensions=GPTsettings.FILE_EXTENSIONS
+        )
         self.GPT.add_message(
             "user",
             GPTsettings.USER_INSTRUCTIONS.format(
