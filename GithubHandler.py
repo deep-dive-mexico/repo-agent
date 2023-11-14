@@ -217,7 +217,6 @@ class GithubHandler:
 
         deltas += f"{filename} - (deltas - This is the code you need to review)\n"
         deltas += "-" * 30 + "\n"
-        breakpoint()
 
         for line in lines:
             if line.startswith("@@"):
