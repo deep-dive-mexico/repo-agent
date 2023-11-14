@@ -38,7 +38,7 @@ class GithubHandler:
             ".graphql",
             ".sql",
             ".md",
-            "",
+            ".jsx",
         ]
 
     def get_commits(self):
@@ -159,10 +159,26 @@ class GithubHandler:
         for f in file_changes:
             file_full_content = self.get_file_contents(f.filename, ref=pr.head.sha)
             full_file_delta = self.get_full_file_delta(f.filename, file_full_content)
-            file_delta_str = self.get_file_deltas_str(f.patch, f.filename)
+            file_delta_str = self.get_file_delta(f.patch, f.filename)
             files_and_deltas += full_file_delta + "\n" + file_delta_str + "\n"
 
         return files_and_deltas
+
+    def get_pr_deltas_in_list(self, pr):
+        file_changes = pr.get_files()
+        blocks = []
+        current_block = ""
+        for file in file_changes:
+            file_deltas = file.patch
+            for line in file_deltas.split("\n"):
+                if line.startswith("@@"):
+                    if current_block != "":
+                        blocks.append(current_block)
+                    current_block = line.split("@@")[-1] + "\n"
+
+                else:
+                    current_block += line + "\n"
+        return blocks
 
     def get_full_file_delta(self, filename, file_full_content):
         """
@@ -185,7 +201,7 @@ class GithubHandler:
             + "\n"
         )
 
-    def get_file_deltas(self, patch, filename):
+    def get_file_delta(self, patch, filename):
         """
         Gets the deltas for a file in the repository.
 
@@ -194,14 +210,18 @@ class GithubHandler:
             filename (str): The path to the file.
 
         Returns:
-            list: A list of dictionaries containing the deltas for the file.
+            str: The deltas for the file formatted for position reviews.
         """
         lines = patch.split("\n")
-        deltas = []
+        deltas = ""
+
+        deltas += f"{filename} - (deltas - This is the code you need to review)\n"
+        deltas += "-" * 30 + "\n"
+        breakpoint()
 
         for line in lines:
             if line.startswith("@@"):
-                chunk_header = self.get_chunk_header(line)
+                deltas += self.get_chunk_header(line)
 
                 add_start_add_len = list(
                     map(int, re.findall("\+(.+?) ", line)[0].split(","))
@@ -211,7 +231,7 @@ class GithubHandler:
                 )
 
                 if len(add_start_add_len) == 1:
-                    return [{"filename": filename, "delta": ""}]
+                    return f"{filename}\n" + "-" * 30 + "\n"
 
                 add_start, add_len = add_start_add_len
                 rem_start, rem_len = rem_start_rem_len
@@ -220,49 +240,13 @@ class GithubHandler:
                 current_rem_line = rem_start
             else:
                 if line.startswith("-"):
-                    deltas.append(
-                        {
-                            "filename": filename,
-                            "delta": self.get_line_delta(
-                                line, current_rem_line, "LEFT"
-                            ),
-                        }
-                    )
+                    deltas += self.get_line_delta(line, current_rem_line, "LEFT")
                     current_rem_line += 1
                 else:
-                    deltas.append(
-                        {
-                            "filename": filename,
-                            "delta": self.get_line_delta(
-                                line, current_add_line, "RIGHT"
-                            ),
-                        }
-                    )
+                    deltas += self.get_line_delta(line, current_add_line, "RIGHT")
                     current_add_line += 1
 
-        return deltas
-
-    def get_file_deltas_str(self, patch, filename):
-        """
-        Joins a list of file deltas into a single string.
-
-        Args:
-            patch (str): The patch containing the file deltas.
-            filenam (str): The name of the file to extract deltas for.
-
-        Returns:
-            str: The deltas for the specified file formatted for position reviews.
-        """
-        file_deltas = self.get_file_deltas(patch, filename)
-        deltas = ""
-
-        for file_delta in file_deltas:
-            deltas += f"{file_delta['filename']} - (deltas - This is the code you need to review)\n"
-            deltas += "-" * 30 + "\n"
-            deltas += file_delta["delta"]
-            deltas += "-" * 30 + "\n"
-
-        return deltas
+        return f"{filename}\n{deltas}\n" + "-" * 30 + "\n"
 
     def get_chunk_header(self, line):
         """

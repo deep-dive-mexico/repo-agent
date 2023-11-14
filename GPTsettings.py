@@ -32,11 +32,11 @@ class GPTsettings:
                                         # DONT USE NONE 
 
         'body': """You should consider refactoring this piece of code, for example you could try:
-        ```suggestion
-        def a_func(a:int, b:int):
-            # func content
-            return # something
-        ```
+```suggestion
+def a_func(a:int, b:int):
+    # func content
+    return # something
+```
         """ # You should follow best style practices for the code language that you are working with, But the body string should be a valid python multiline string
     },
     {
@@ -48,7 +48,7 @@ class GPTsettings:
     Some desired properties:
         - When specifying the positions, Use the right line for the comment as specified in the diff
         - Be really careful with this! Don't use the ' token in your comments (only when needed for the code) or it will break the python code.
-        - Provide code suggestions as much as possible in your comments, for that you can use the standart format ```suggestion <suggested_change> ```
+        - Provide code suggestions as much as possible in your comments, for that you can use the standart format ```suggestion \n <suggested_change> \n```
         - When providing suggestions use the lines that you want to modify! If you select a range the suggestion will modify all that range for your suggested code, if you only add one line all the code from your suggestion will be inserted in that line.
         - Be really careful with the suggestions! Good luck
 
