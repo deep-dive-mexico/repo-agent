@@ -14,7 +14,7 @@ if __name__ == "__main__":
     agent = CommentAgent(
         repo_name=REPO_NAME,
         branch_or_prnum=BRANCH_OR_PR_NUMBER,
-        branch=MAIN_BRANCH,
+        main_branch=MAIN_BRANCH,
         github_auth_token=ACCESS_TOKEN,
     )
     agent.run()

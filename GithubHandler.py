@@ -8,8 +8,28 @@ class GithubHandler:
     Handles interactions with the GitHub API.
     """
 
+    FILE_EXTENSIONS = [
+        ".py",
+        ".java",
+        ".js",
+        ".ts",
+        ".html",
+        ".css",
+        ".scss",
+        ".sass",
+        ".gql",
+        ".graphql",
+        ".sql",
+        ".md",
+        ".jsx",
+    ]
+
     def __init__(
-        self, repo_name: str, main_branch: str = "main", auth_token: str = None
+        self,
+        repo_name: str,
+        main_branch: str = "main",
+        auth_token: str = None,
+        file_extensions: list = None,
     ):
         """
         Initializes a new instance of the GithubHandler class.
@@ -19,6 +39,9 @@ class GithubHandler:
             main_branch (str): The name of the main branch of the repository. Defaults to "main".
             auth_token (str): The authentication token to use for interacting with the repository. Defaults to None.
         """
+        if file_extensions:
+            self.FILE_EXTENSIONS = file_extensions
+
         self.repo_name = repo_name
         self.authenticate(auth_token=auth_token)
         self.repo = self.g.get_repo(self.repo_name)
@@ -139,15 +162,35 @@ class GithubHandler:
         Returns:
             str: The deltas for the pull request.
         """
+
+        valid_extensions = self.FILE_EXTENSIONS
         files_and_deltas = ""
         file_changes = pr.get_files()
         for f in file_changes:
+            if not any([f.filename.endswith(ext) for ext in valid_extensions]):
+                continue
             file_full_content = self.get_file_contents(f.filename, ref=pr.head.sha)
             full_file_delta = self.get_full_file_delta(f.filename, file_full_content)
-            file_delta = self.get_file_delta(f.patch, f.filename)
-            files_and_deltas += full_file_delta + "\n" + file_delta + "\n"
+            file_delta_str = self.get_file_delta(f.patch, f.filename)
+            files_and_deltas += full_file_delta + "\n" + file_delta_str + "\n"
 
         return files_and_deltas
+
+    def get_pr_deltas_in_list(self, pr):
+        file_changes = pr.get_files()
+        blocks = []
+        current_block = ""
+        for file in file_changes:
+            file_deltas = file.patch
+            for line in file_deltas.split("\n"):
+                if line.startswith("@@"):
+                    if current_block != "":
+                        blocks.append(current_block)
+                    current_block = line.split("@@")[-1] + "\n"
+
+                else:
+                    current_block += line + "\n"
+        return blocks
 
     def get_full_file_delta(self, filename, file_full_content):
         """

@@ -170,7 +170,9 @@ class ResponseParser:
             print("Found Python Block: ", python_code_block)
             return python_code_block
         else:
-            raise ParsingError("No python snippet provided")
+            raise ParsingError(
+                "No python snippet provided. Please include a python code block using the markdown format ```python ... ``` for clarity and proper parsing."
+            )
 
     def get_body_event_and_comments(self):
         """
@@ -201,6 +203,7 @@ class ResponseParser:
         """
         new_comments = []
         for comment in comments:
+            # Remove keys that are not needed for the review
             new_comment = comment.copy()
             if new_comment["side"] not in ["LEFT", "RIGHT"]:
                 new_comment.pop(new_comment["side"])
@@ -210,6 +213,16 @@ class ResponseParser:
             if "start_side" in new_comment:
                 if new_comment["start_side"] is None:
                     new_comment.pop("start_side")
+
+            # Remove leading spaces from comment body
+            comment_body = new_comment["body"]
+            comment_lines = comment_body.split("\n")
+            new_lines = []
+            for line in comment_lines:
+                if "```suggestion" in line or "```" in line:
+                    line = line.lstrip()
+                new_lines.append(line)
+            new_comment["body"] = "\n".join(new_lines)
             new_comments.append(new_comment)
         return new_comments
 
@@ -255,11 +268,12 @@ class CommentAgent:
             The GitHub authentication token.
         """
         self.comment_only = comment_only
+        self.main_branch = main_branch
         self.GH = GithubHandler(
             repo_name=repo_name, main_branch=main_branch, auth_token=github_auth_token
         )
+        self.GH.FILE_EXTENSIONS = GPTsettings.FILE_EXTENSIONS
         self.pr = self.get_pr(branch_or_prnum)
-        self.main_branch = main_branch
         self.init_GPT()
 
     @staticmethod
@@ -362,7 +376,11 @@ class CommentAgent:
                 logging.error("Error parsing response, try again")
                 continue
             except github.GithubException:
-                return False
+                error = traceback.format_exc()
+                logging.error(f"Github Exception:\n{error}")
+                self.GPT.add_message(
+                    "user", f"Your code failed with exception {error} try again"
+                )
         return False
 
     def run(self) -> None:
@@ -376,3 +394,11 @@ class CommentAgent:
             if not success:
                 self.init_GPT()
                 self.comment_on_pr()
+
+
+def get_unique_list_items(list_: list):
+    unique_list = []
+    for item in list_:
+        if item not in unique_list:
+            unique_list.append(item)
+    return unique_list
