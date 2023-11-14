@@ -362,7 +362,11 @@ class CommentAgent:
                 logging.error("Error parsing response, try again")
                 continue
             except github.GithubException:
-                return False
+                error = traceback.format_exc()
+                logging.error(f"Github Exception:\n{error}")
+                self.GPT.add_message(
+                    "user", f"Your code failed with exception {error} try again"
+                )
         return False
 
     def run(self) -> None:
