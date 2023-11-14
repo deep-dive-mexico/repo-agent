@@ -25,7 +25,11 @@ class GithubHandler:
     ]
 
     def __init__(
-        self, repo_name: str, main_branch: str = "main", auth_token: str = None
+        self,
+        repo_name: str,
+        main_branch: str = "main",
+        auth_token: str = None,
+        file_extensions: list = None,
     ):
         """
         Initializes a new instance of the GithubHandler class.
@@ -35,6 +39,9 @@ class GithubHandler:
             main_branch (str): The name of the main branch of the repository. Defaults to "main".
             auth_token (str): The authentication token to use for interacting with the repository. Defaults to None.
         """
+        if file_extensions:
+            self.FILE_EXTENSIONS = file_extensions
+
         self.repo_name = repo_name
         self.authenticate(auth_token=auth_token)
         self.repo = self.g.get_repo(self.repo_name)

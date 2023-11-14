@@ -59,7 +59,7 @@ comments = [
 
 ONLY RETURN THE CODE and use ```python\n<valid_python_code>\n```"
 '''
-    FILE_EXTENSIONS = [
+    FILE_EXTENSIONS = {
         ".py",
         ".java",
         ".js",
@@ -73,4 +73,4 @@ ONLY RETURN THE CODE and use ```python\n<valid_python_code>\n```"
         ".sql",
         ".md",
         ".jsx",
-    ]
+    }
