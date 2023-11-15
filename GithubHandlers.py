@@ -224,6 +224,8 @@ class GithubHandler:
         Returns:
             str: The deltas for the file formatted for position reviews.
         """
+        if patch is None:
+            return f"{filename}\n" + "-" * 30 + "\n"
         lines = patch.split("\n")
         deltas = ""
 
