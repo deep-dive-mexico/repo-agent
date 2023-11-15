@@ -1,5 +1,4 @@
 import github
-from openai import OpenAI
 import re
 import traceback
 from typing import List
@@ -7,113 +6,8 @@ import logging
 
 # Local Imports
 from GPTsettings import GPTsettings
-from GithubHandler import GithubHandler
-
-
-class GPTWrapper:
-    def __init__(self, model: str = GPTsettings.MODEL) -> None:
-        """
-        Initializes a new instance of the GPTWrapper class.
-
-        Args:
-            model (str, optional): The name of the GPT model to use. Defaults to "text-davinci-002".
-        """
-        self.client = OpenAI()
-        self.model: str = model
-        self.conversation: list[
-            dict[str, str]
-        ] = []  # This will hold our conversation messages
-
-    def add_message(self, role: str, content: str) -> None:
-        """
-        Adds a message to the conversation history.
-
-        Args:
-            role (str): Indicates who is acting on the conversation [system, user, assistant].
-            content (str): The actual message.
-        """
-        self.conversation.append({"role": role, "content": content})
-
-    def edit_message(self, index: int, role: str, content: str) -> None:
-        """
-        Edits a message in the conversation by index.
-
-        Args:
-            index (int): The index of the message to edit.
-            role (str): Indicates who is acting on the conversation [system, user, assistant].
-            content (str): The new content of the message.
-
-        Raises:
-            IndexError: If the index is out of range.
-        """
-        if index < len(self.conversation):
-            self.conversation[index] = {"role": role, "content": content}
-        else:
-            raise IndexError("Message index out of range")
-
-    def get_response(self, max_tokens: int = 1000) -> str:
-        """
-        Gets a response from the API based on the current conversation.
-
-        Args:
-            max_tokens (int, optional): The maximum number of tokens to generate in the response. Defaults to 1000.
-
-        Returns:
-            str: The generated response.
-        """
-        response = self.client.chat.completions.create(
-            model=self.model, messages=self.conversation, max_tokens=max_tokens
-        )
-
-        return response.choices[0].message.content
-
-    def __getitem__(self, index: int) -> dict[str, str]:
-        """
-        Gets a message from the conversation by index.
-
-        Args:
-            index (int): The index of the message to get.
-
-        Returns:
-            dict[str, str]: The message at the specified index.
-        """
-        return self.conversation[index]
-
-    def __setitem__(self, index: int, value: tuple[str, str]) -> None:
-        """
-        Sets a message in the conversation by index.
-
-        Args:
-            index (int): The index of the message to set.
-            value (tuple[str, str]): A tuple containing the role and content of the new message.
-        """
-        role, content = value
-        self.edit_message(index, role, content)
-
-    def __str__(self) -> str:
-        """
-        The __str__ function is a special function that returns a string representation of the object.
-        This is what you get when you call str(obj) or print(obj).
-        The __repr__ function is similar, but it's supposed to be unambiguous and often more detailed.
-
-        Args:
-            self: Refer to the object itself
-
-        Returns:
-            A string representation of the conversation
-
-        Doc Author:
-            Trelent
-        """
-        """
-        Returns a readable string representation of the conversation.
-
-        Returns:
-            str: A string representation of the conversation.
-        """
-        return "\n".join(
-            f"{msg['role']}: {msg['content']}" for msg in self.conversation
-        )
+from GithubHandlers import GithubHandler
+from GPTutils import GPTWrapper
 
 
 class ParsingError(Exception):
@@ -360,12 +254,15 @@ class CommentAgent:
         for _ in range(3):
             message_format = GPTsettings.MESSAGE_FORMAT
             self.GPT.add_message("user", message_format)
-            message_response = self.GPT.get_response(max_tokens=2500)
+            message_response = self.GPT.get_response(
+                max_tokens=4096
+            )  # Max length of response is 4096 (max allowed for responses by openai)
             try:
                 logging.info(message_response)
                 response_parser = ResponseParser(message_response)
                 body, event, comments = response_parser.get_body_event_and_comments()
                 self.pr.create_review(body=body, event=event, comments=comments)
+                print(self.GPT)
                 return True
             except ParsingError:
                 error = traceback.format_exc()

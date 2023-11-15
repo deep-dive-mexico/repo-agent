@@ -1,6 +1,7 @@
 from github import Auth, Github
 import traceback
 import re
+from GPTutils import FilesIndex
 
 
 class GithubHandler:
@@ -48,6 +49,17 @@ class GithubHandler:
         self.prs = self.repo.get_pulls(state="open", sort="created", base=main_branch)
         self.prs_nums = [pr.number for pr in self.prs]
         self.prs_dict = {k: v for k, v in zip(self.prs_nums, self.prs)}
+
+    def index_pr(self, pr):
+        file_contents = {}
+        file_changes = pr.get_files()
+        for file in file_changes:
+            if not any([file.filename.endswith(ext) for ext in self.FILE_EXTENSIONS]):
+                continue
+            file_full_content = self.get_file_contents(file.filename, ref=pr.head.sha)
+            file_contents[file.filename] = file_full_content
+
+        self.index = FilesIndex(file_contents)
 
     def get_commits(self):
         """
@@ -152,7 +164,7 @@ class GithubHandler:
             traceback.print_exc()
             return "Could not retrieve file contents."
 
-    def get_pr_deltas(self, pr):
+    def get_pr_deltas(self, pr) -> str:
         """
         Gets the deltas for a pull request.
 
@@ -160,21 +172,46 @@ class GithubHandler:
             pr (PullRequest): The pull request to get deltas for.
 
         Returns:
-            str: The deltas for the pull request.
+            str: The deltas for the pull request plus additional code context.
         """
-
-        valid_extensions = self.FILE_EXTENSIONS
-        files_and_deltas = ""
+        self.index_pr(pr)
+        delta_query = ""
         file_changes = pr.get_files()
         for f in file_changes:
-            if not any([f.filename.endswith(ext) for ext in valid_extensions]):
+            if not any([f.filename.endswith(ext) for ext in self.FILE_EXTENSIONS]):
                 continue
-            file_full_content = self.get_file_contents(f.filename, ref=pr.head.sha)
-            full_file_delta = self.get_full_file_delta(f.filename, file_full_content)
-            file_delta_str = self.get_file_delta(f.patch, f.filename)
-            files_and_deltas += full_file_delta + "\n" + file_delta_str + "\n"
 
-        return files_and_deltas
+            file_delta_str = self.get_file_delta(f.patch, f.filename)
+            file_delta_context = self.get_file_context(file_delta_str)
+            delta_query_block = self.get_delta_query_block(
+                file_delta_str, file_delta_context
+            )
+            delta_query += delta_query_block
+
+        return delta_query
+
+    def get_delta_query_block(self, file_delta_str, file_delta_context):
+        query_block = f"""Add a code review comment to the following changes:
+        {file_delta_str}
+        
+        Only for context, here is some code from the repository (DO NOT REVIEW THIS CODE, IT IS ONLY FOR CONTEXTUAL INPUT):
+        {file_delta_context}\n"""
+        return query_block
+
+    def get_file_context(self, code_str, k=10):
+        idxs, docs = self.index.search_docs(code_str, top_k=k, sorted_by="file")
+        context = "```"
+        current_file = ""
+        for idx, doc in zip(idxs, docs):
+            if self.index.get_filename(idx) != current_file:
+                current_file = self.index.get_filename(idx)
+                context += f"###{current_file}\n"
+            else:
+                context += "...\n"
+
+            context += f"{doc}\n"
+        context += "```"
+        return context
 
     def get_pr_deltas_in_list(self, pr):
         file_changes = pr.get_files()
@@ -224,6 +261,8 @@ class GithubHandler:
         Returns:
             str: The deltas for the file formatted for position reviews.
         """
+        if patch is None:
+            return f"{filename}\n" + "-" * 30 + "\n"
         lines = patch.split("\n")
         deltas = ""
 
