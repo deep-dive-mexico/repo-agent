@@ -2,3 +2,4 @@ PyGithub
 openai==1.2.4
 numpy==1.26.2
 langchain==0.0.335
+tiktoken
