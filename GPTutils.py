@@ -247,6 +247,7 @@ class FilesIndex:
                 scores += cosim_matrix(query_embedding, self.embeddings)
 
         elif isinstance(queries, str):
+            query = queries  # signaling that queries is a string
             query_embedding = np.array(self.embeddings_model.embed_query(query))
             scores = cosim_matrix(query_embedding, self.embeddings)
 
