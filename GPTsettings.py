@@ -20,7 +20,7 @@ class GPTsettings:
     """
     COMMENTS_PROMPT = "Here are comments from the PR:\n{comments}"
 
-    MESSAGE_FORMAT = '''Return your comments in the following format, it needs to be python code!
+    MESSAGE_FORMAT = """Return your comments in the following format, it needs to be python code!
 ```python
 body = # Your main comment here
 event = # One of the following: "COMMENT", "REQUEST_CHANGES", "PENDING", "APPROVE"
@@ -44,13 +44,13 @@ comments = [
                                     # Optional, only needed for multi-line comments, If not needed just don't add the parameter to the dict
                                     # DONT USE NONE 
 
-    'body': """You should consider refactoring this piece of code, for example you could try:
+    'body': '''You should consider refactoring this piece of code, for example you could try:
     ```suggestion
     def a_func(a:int, b:int):
         # func content
         return # something
     ```
-    """ # You should follow best style practices for the code language that you are working with, But the body string should be a valid python multiline string
+    ''' # You should follow best style practices for the code language that you are working with, But the body string should be a valid python multiline string
 },
 {
     'path': 'another_file.py',    # adjust according to your files. USE THE FULL PATH
@@ -61,7 +61,7 @@ comments = [
 ```
 
 ONLY RETURN THE CODE and use ```python\n<valid_python_code>\n```"
-'''
+"""
     FILE_EXTENSIONS = {
         ".py",
         ".java",
