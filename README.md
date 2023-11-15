@@ -49,5 +49,9 @@ Finally in the repository settings you should add the secrets:
 - OPENAI_API_KEY: An openai api key with access to the latest models
 
 
+## Optional Tuning
+The agent should work outside the box as it is, but you can also add custom instructions like examples of good practices or tone, there is a sample in this repository.
+The way you add this is adding a file named README.md (case sensitive) in the path: agent-settings/README.md, dont be shy in your instructions but beware of context window, so dont abuse it.
+
 
 
