@@ -254,7 +254,9 @@ class CommentAgent:
         for _ in range(3):
             message_format = GPTsettings.MESSAGE_FORMAT
             self.GPT.add_message("user", message_format)
-            message_response = self.GPT.get_response(max_tokens=4096)
+            message_response = self.GPT.get_response(
+                max_tokens=4096
+            )  # Max length of response is 4096 (max allowed for responses by openai)
             try:
                 logging.info(message_response)
                 response_parser = ResponseParser(message_response)
