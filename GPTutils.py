@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple, Union
 import asyncio
 
 from openai import OpenAI
@@ -137,7 +137,6 @@ def to_docs(text: str, file_extension: str) -> List[str]:
             language=language, chunk_size=500, chunk_overlap=0
         )
         docs = python_splitter.create_documents([text])
-        print("splitted code docs")
         docs = [doc.page_content for doc in docs]
     else:
         text_splitter = CharacterTextSplitter(
@@ -148,15 +147,40 @@ def to_docs(text: str, file_extension: str) -> List[str]:
             is_separator_regex=False,
         )
         docs = text_splitter.split_text(text)
-        print("splitted text docs")
     return docs
 
 
 def cosim(a, b):
+    """
+    Computes the cosine similarity between two vectors a and b.
+
+    Args:
+    a (numpy.ndarray): The first vector.
+    b (numpy.ndarray): The second vector.
+
+    Returns:
+    float: The cosine similarity between a and b.
+    """
     return np.dot(a, b) / (norm(a) * norm(b))
 
 
 def cosim_matrix(a, b):
+    """
+    Computes the cosine similarity matrix between two matrices a and b.
+
+    Args:
+    a (numpy.ndarray): An array of shape (n).
+    b (numpy.ndarray): A matrix of shape (k, n).
+
+    Returns:
+    numpy.ndarray: An array of shape (k) containing the cosine similarity between each row of a and b.
+
+    Examples:
+    >>> a = np.array([1, 2, 3])
+    >>> b = np.array([[1, 2, 3], [4, 5, 6]])
+    >>> cosim_matrix(a, b)
+    array([1.        , 0.97463185])
+    """
     return np.dot(a, b.T) / (norm(a) * norm(b, axis=1))
 
 
@@ -171,9 +195,11 @@ class FilesIndex:
         """
         self.files = files
         self.index: Dict[str, List[int]] = {}
+        self.idx_to_filename = {}
         self.embeddings_model = OpenAIEmbeddings()
         self.docs: List[str] = []
         self.embeddings: np.ndarray = None
+        self.index_files()
 
     def index_files(self) -> None:
         """
@@ -191,19 +217,45 @@ class FilesIndex:
             self.docs += docs
             embeddings += self.embeddings_model.embed_documents(docs)
         self.embeddings = np.array(embeddings)
+        for filename, idxs in self.index.items():
+            for idx in idxs:
+                self.idx_to_filename[idx] = filename
 
-    def search_docs(self, query: str, top_k: int = 5) -> List[str]:
+    def search_docs(
+        self, queries: Union[str, List[str]], top_k: int = 5, sorted_by="score"
+    ) -> Tuple[List[int], List[str]]:
         """
-        Searches for the top k documents that are most similar to the given query.
+        Searches for the top k documents that are most similar to the given queries.
+
 
         Args:
             query (str): The query to search for.
             top_k (int, optional): The number of top documents to return. Defaults to 5.
-
+            sorted_by (str, optional)
         Returns:
             List[str]: A list of the top k documents that are most similar to the given query.
         """
-        query_embedding = np.array(self.embeddings_model.embed_query(query))
-        scores = cosim_matrix(query_embedding, self.embeddings)
+        if isinstance(queries, list):
+            query_embeddings = []
+            for query in queries:
+                query_embeddings.append(
+                    np.array(self.embeddings_model.embed_query(query))
+                )
+
+            scores = cosim_matrix(query_embeddings[0], self.embeddings)
+            for query_embedding in query_embeddings[1:]:
+                scores += cosim_matrix(query_embedding, self.embeddings)
+
+        elif isinstance(queries, str):
+            query_embedding = np.array(self.embeddings_model.embed_query(query))
+            scores = cosim_matrix(query_embedding, self.embeddings)
+
         top_k_idxs = np.argsort(scores)[::-1][:top_k]
-        return [self.docs[idx] for idx in top_k_idxs]
+
+        if sorted_by == "file":
+            top_k_idxs = sorted(top_k_idxs)
+
+        return top_k_idxs, [self.docs[idx] for idx in top_k_idxs]
+
+    def get_filename(self, idx: int):
+        return self.idx_to_filename[idx]
