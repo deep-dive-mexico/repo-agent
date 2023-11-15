@@ -202,7 +202,7 @@ class CommentAgent:
 
     def add_custom_instructions(self) -> None:
         """Looks for a custom isntructions file, and adds them to the GPT convo"""
-        file_contents = self.GPT.get_file_contents("agent-settings/README.md")
+        file_contents = self.GH.get_file_contents("agent-settings/README.md")
         if file_contents != "Could not retrieve file contents.":
             custom_instructions_prompt = f"""The following are custom instructions for this repository:\n{file_contents}"""
             self.GPT.add_message("user", custom_instructions_prompt)
