@@ -49,7 +49,6 @@ class GithubHandler:
         self.prs = self.repo.get_pulls(state="open", sort="created", base=main_branch)
         self.prs_nums = [pr.number for pr in self.prs]
         self.prs_dict = {k: v for k, v in zip(self.prs_nums, self.prs)}
-        self.index_pr()
 
     def index_pr(self, pr):
         file_contents = {}
@@ -175,6 +174,7 @@ class GithubHandler:
         Returns:
             str: The deltas for the pull request plus additional code context.
         """
+        self.index_pr(pr)
         delta_query = ""
         file_changes = pr.get_files()
         for f in file_changes:
