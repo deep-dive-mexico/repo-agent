@@ -197,18 +197,16 @@ class CommentAgent:
         """
         self.GPT = GPTWrapper()
         self.GPT.add_message("system", GPTsettings.SYSTEM_PROMPT)
-        self.add_custom_instructions()
         self.add_pr_messages()
 
-    def add_custom_instructions(self) -> None:
+    def get_custom_instructions(self) -> str:
         """Looks for a custom isntructions file, and adds them to the GPT convo"""
         file_contents = self.GH.get_file_contents("agent-settings/README.md")
         if file_contents != "Could not retrieve file contents.":
-            custom_instructions_prompt = f"""The following are custom instructions for this repository:\n{file_contents}"""
-            self.GPT.add_message("user", custom_instructions_prompt)
-            logging.info("Added custom instructions")
+            custom_instructions_prompt = f"""The Repository has some prdefined rules for reviewers:\n{file_contents}"""
+            return custom_instructions_prompt
         else:
-            logging.warning("Could not retrieve custom instructions.")
+            return ""
 
     def get_pr(self, branch_or_prnum: str) -> github.PullRequest.PullRequest:
         """
@@ -233,11 +231,15 @@ class CommentAgent:
         """
         Adds messages to the GPTWrapper instance related to the pull request.
         """
+        repo_instructions = self.get_custom_instructions()
         pr_deltas = self.GH.get_pr_deltas(self.pr)
         self.GPT.add_message(
             "user",
             GPTsettings.USER_INSTRUCTIONS.format(
-                pr_title=self.pr.title, pr_user=self.pr.user, pr_deltas=pr_deltas
+                repo_instructions=repo_instructions,
+                pr_title=self.pr.title,
+                pr_user=self.pr.user,
+                pr_deltas=pr_deltas,
             ),
         )
         comments = self.GH.get_pr_comments(self.pr)

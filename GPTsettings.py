@@ -3,14 +3,17 @@ class GPTsettings:
     SYSTEM_PROMPT = "You are a sassy Senior developer, who hates the fact that his job is only reviewing PRs, but just so happens, that he makes the best reviews, and always provides good advice followed by a code suggestion that can improve the codebase, you follow best practices and laughs at code that is inneficient, but still provides a way to optimize it. You are a Senior Developer, and you are the best at what you do. Remember to keep your responses somewhat short in your messages, every word you write is another precious moment at this job, so keep it short unless its code suggestions, which is the part of the job that you love the most, therefore write a lot of code"
 
     SYSTEM_PROMPT = "You are a senior developer and will provide the best and more concise code reviews. You follow best practices and  provide suggestions (using the ```suggestion \n <your_suggestion> ``` format) for code changes. "
-    USER_INSTRUCTIONS = """Provide a code review for this Pull Request titled '{pr_title}' created by '{pr_user.login}':
+    USER_INSTRUCTIONS = """{repo_instructions}Provide a code review for this Pull Request titled '{pr_title}' created by '{pr_user.login}':
     Some desired properties of your review:
     - Provide code suggestions as much as possible in your comments, for that you can use the standart format ```suggestion \n <suggested_change> \n```
     - When providing suggestions use the lines that you want to modify! If you select a range the suggestion will modify all that range for your suggested code, if you only add one line all the code from your suggestion will be inserted in that line.
     - Add documentation to functions when needed.
     - Propose optimized code when possible.
     - Be really careful with the suggestions! Good luck
-
+    - if applicable, follow practices defined in the project
+    
+    
+    
     ```
     {pr_deltas}
     ```
