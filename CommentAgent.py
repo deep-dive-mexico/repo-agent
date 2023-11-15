@@ -200,7 +200,7 @@ class CommentAgent:
         self.add_pr_messages()
 
     def get_custom_instructions(self) -> str:
-        """Looks for a custom isntructions file, and adds them to the GPT convo"""
+        """Retrieves custom instructions for the repository from a markdown file if it exists."""
         file_contents = self.GH.get_file_contents("agent-settings/README.md")
         if file_contents != "Could not retrieve file contents.":
             custom_instructions_prompt = f"""The Repository has some prdefined rules for reviewers:\n{file_contents}"""
@@ -304,11 +304,3 @@ class CommentAgent:
             if not success:
                 self.init_GPT()
                 self.comment_on_pr()
-
-
-def get_unique_list_items(list_: list):
-    unique_list = []
-    for item in list_:
-        if item not in unique_list:
-            unique_list.append(item)
-    return unique_list
