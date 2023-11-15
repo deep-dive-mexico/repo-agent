@@ -199,6 +199,12 @@ class CommentAgent:
         self.GPT.add_message("system", GPTsettings.SYSTEM_PROMPT)
         self.add_pr_messages()
 
+    def add_custom_instructions(self) -> None:
+        file_contents = self.GPT.get_file_contents("agent-settings/README.md")
+        if file_contents != "Could not retrieve file contents.":
+            custom_instructions_prompt = f"""The following are custom instructions for this repository:\n{file_contents}"""
+            self.GPT.add_message("user", custom_instructions_prompt)
+
     def get_pr(self, branch_or_prnum: str) -> github.PullRequest.PullRequest:
         """
         Gets the pull request instance from the given branch name or pull request number.
