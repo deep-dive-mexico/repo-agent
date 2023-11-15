@@ -199,11 +199,14 @@ class CommentAgent:
         self.GPT.add_message("system", GPTsettings.SYSTEM_PROMPT)
         self.add_pr_messages()
 
-    def add_custom_instructions(self) -> None:
-        file_contents = self.GPT.get_file_contents("agent-settings/README.md")
+    def get_custom_instructions(self) -> str:
+        """Retrieves custom instructions for the repository from a markdown file if it exists."""
+        file_contents = self.GH.get_file_contents("agent-settings/README.md")
         if file_contents != "Could not retrieve file contents.":
-            custom_instructions_prompt = f"""The following are custom instructions for this repository:\n{file_contents}"""
-            self.GPT.add_message("user", custom_instructions_prompt)
+            custom_instructions_prompt = f"""The Repository has some prdefined rules for reviewers:\n{file_contents}"""
+            return custom_instructions_prompt
+        else:
+            return ""
 
     def get_pr(self, branch_or_prnum: str) -> github.PullRequest.PullRequest:
         """
@@ -228,11 +231,15 @@ class CommentAgent:
         """
         Adds messages to the GPTWrapper instance related to the pull request.
         """
+        repo_instructions = self.get_custom_instructions()
         pr_deltas = self.GH.get_pr_deltas(self.pr)
         self.GPT.add_message(
             "user",
             GPTsettings.USER_INSTRUCTIONS.format(
-                pr_title=self.pr.title, pr_user=self.pr.user, pr_deltas=pr_deltas
+                repo_instructions=repo_instructions,
+                pr_title=self.pr.title,
+                pr_user=self.pr.user,
+                pr_deltas=pr_deltas,
             ),
         )
         comments = self.GH.get_pr_comments(self.pr)
@@ -297,11 +304,3 @@ class CommentAgent:
             if not success:
                 self.init_GPT()
                 self.comment_on_pr()
-
-
-def get_unique_list_items(list_: list):
-    unique_list = []
-    for item in list_:
-        if item not in unique_list:
-            unique_list.append(item)
-    return unique_list
