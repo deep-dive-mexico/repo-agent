@@ -254,7 +254,7 @@ class CommentAgent:
         for _ in range(3):
             message_format = GPTsettings.MESSAGE_FORMAT
             self.GPT.add_message("user", message_format)
-            message_response = self.GPT.get_response(max_tokens=5000)
+            message_response = self.GPT.get_response(max_tokens=4096)
             try:
                 logging.info(message_response)
                 response_parser = ResponseParser(message_response)
