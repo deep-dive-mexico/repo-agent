@@ -262,7 +262,7 @@ class CommentAgent:
                 response_parser = ResponseParser(message_response)
                 body, event, comments = response_parser.get_body_event_and_comments()
                 self.pr.create_review(body=body, event=event, comments=comments)
-                logging.info(f"Review successful, conversation:\n{self.GPT}")
+                print(self.GPT)
                 return True
             except ParsingError:
                 error = traceback.format_exc()
