@@ -204,6 +204,8 @@ class CommentAgent:
         if file_contents != "Could not retrieve file contents.":
             custom_instructions_prompt = f"""The following are custom instructions for this repository:\n{file_contents}"""
             self.GPT.add_message("user", custom_instructions_prompt)
+        else:
+            logging.warning("Could not retrieve custom instructions.")
 
     def get_pr(self, branch_or_prnum: str) -> github.PullRequest.PullRequest:
         """
