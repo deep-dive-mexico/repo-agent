@@ -74,4 +74,5 @@ ONLY RETURN THE CODE and use ```python\n<valid_python_code>\n```"
         ".sql",
         ".md",
         ".jsx",
+        ".tsx"
     }
