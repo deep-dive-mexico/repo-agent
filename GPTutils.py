@@ -24,6 +24,7 @@ mapper = {
     "java": "java",
     "html": "html",
     "md": "markdown",
+    "tsx": "ts",
 }
 
 
