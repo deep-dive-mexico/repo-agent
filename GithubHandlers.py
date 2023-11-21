@@ -2,7 +2,7 @@ from github import Auth, Github
 import traceback
 import re
 from GPTutils import FilesIndex
-from GPTsettings import GPTSettings
+from GPTsettings import GPTsettings
 
 
 class GithubHandler:
@@ -10,7 +10,7 @@ class GithubHandler:
     Handles interactions with the GitHub API.
     """
 
-    FILE_EXTENSIONS = GPTSettings.FILE_EXTENSIONS
+    FILE_EXTENSIONS = GPTsettings.FILE_EXTENSIONS
 
     def __init__(
         self,
