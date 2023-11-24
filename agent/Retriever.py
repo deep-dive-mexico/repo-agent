@@ -18,7 +18,7 @@ class Retriever:
     def __init__(self, index_path):
         
         self.llm = OpenAI(temperature=0, model="gpt-4-1106-preview")
-        self.service_context = ServiceContext.from_defaults(llm=llm)
+    self.service_context = ServiceContext.from_defaults(llm=self.llm)
     
     def load_documents(files=files):
         self.docs = {}
