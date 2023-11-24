@@ -20,7 +20,7 @@ class Retriever:
         self.llm = OpenAI(temperature=0, model="gpt-4-1106-preview")
     self.service_context = ServiceContext.from_defaults(llm=self.llm)
     
-    def load_documents(files=files):
+    def load_documents(self, files):
         self.docs = {}
         for file in files.keys():
             docs[file] = SimpleDirectoryReader(
