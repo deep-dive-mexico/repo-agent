@@ -29,11 +29,7 @@ class Retriever:
 
 
 
-    def create_agents(_files, _docs, _service_context):
-        self.agents = {}
-        for file in files.keys():
-            # build vector and summary index
-            vector_index = VectorStoreIndex.from_documents(docs[file], service_context=service_context)
+    def create_agents(self, files, docs, service_context):
             summary_index = SummaryIndex.from_documents(docs[file], service_context=service_context)
             
             # define query engines
