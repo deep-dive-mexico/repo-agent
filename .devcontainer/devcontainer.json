@@ -1,0 +1,8 @@
+{
+  "name": "repo-agent",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "mounts": [
+    "source=claude-code-monitoring,target=/home/vscode/.claude/metrics,type=volume"
+  ],
+  "postCreateCommand": "bash claude_code_monitoring/devcontainer-bootstrap.sh"
+}

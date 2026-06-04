@@ -1,0 +1,6 @@
+{
+  "_comment": "Copy to ~/.claude/metrics/monitoring.config.json to enable S3 shipping. Bucket/region are fixed (the shared org bucket). AWS credentials are NOT here and NOT from `aws configure` — they live per-repo in <repo>/claude_code_monitoring/.aws-credentials.json (gitignored). Delete this file to disable shipping (local logging continues).",
+  "s3_bucket": "claude-code-monitoring",
+  "s3_prefix": "sessions",
+  "aws_region": "us-east-1"
+}
